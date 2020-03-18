@@ -1,0 +1,4 @@
+- npm i
+- make sure to have postgres installed and running
+- create a database acme-api-db
+- npm run start:dev:big 
