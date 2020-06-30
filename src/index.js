@@ -30,10 +30,12 @@ import axios from 'axios';
 //constants
 const SET_AUTH = 'SET_AUTH';
 const SET_NOTES = 'SET_NOTES';
+const CREATE_NOTE = 'CREATE_NOTE';
 
 //action creators
 const setAuth = (auth)=> ({ type: SET_AUTH, auth });
 const setNotes = (notes)=> ({ type: SET_NOTES, notes });
+const createNote = (note)=> ({ type: CREATE_NOTE, note });
 
 //thunks
 const getAuth = ()=> {
@@ -65,6 +67,13 @@ const store = createStore(
         return action.notes;
       }
       return state;
+    },
+    newNote: (state = '', action) => {
+      if(action.type === CREATE_NOTE){
+        return action.note;
+      } else {
+        return state
+      }
     }
   }), applyMiddleware(thunks)
 );
@@ -78,6 +87,7 @@ const _Nav = ({ auth, notes })=> {
     <div>
       <nav>
         <Link to='/notes'>Notes ({ notes.length })</Link>
+        <Link to='/notes'>Create</Link>
       </nav>
       <h1>Welcome { auth.fullName }</h1>
     </div>
@@ -93,15 +103,76 @@ const Nav = connect(
   }
 )(_Nav);
 
-class _App extends Component{
+const _Notes = ({ auth, notes })=> {
+  return (
+    <ul>
+      {notes.map(note => <li key={note.id}>{note.text}</li>)}
+    </ul>
+  );
+};
+
+const Notes = connect(
+  ({ auth, notes })=> {
+    return {
+      auth,
+      notes
+    };
+  }
+)(_Notes);
+
+const handleChange = (event) => {
+  store.dispatch({
+    type: CREATE_NOTE,
+    note: event.target.value
+  })
+}
+
+const handleSubmit = (event, auth, note) => {
+  event.preventDefault();
+
+  dispatch(() => {
+    axios.post(`/api/users/${auth.id}/notes`, {userId: auth.id, text: note.text, archived: false})
+    .then(response => console.log(response));
+  })
+
+}
+
+const _Create = ({ auth, notes })=> {
+  return (
+    <form onSubmit={(e) => handleSubmit(e, auth, note)}>
+      <input value={} onChange={handleChange}/>
+      <button>Create Note!</button>
+    </form>
+  );
+};
+
+const Create = connect(
+  ({ auth, notes })=> {
+    return {
+      auth,
+      notes
+    };
+  }
+)(_Create);
+
+// const mapStateToProps = (state) => {
+//   return {
+//     auth: state.auth,
+//     notes: state.notes
+//   }
+// }
+
+class _App extends Component{ 
   componentDidMount(){
     this.props.fetchUser()
   }
+
   render(){
     return (
-      <HashRouter>
-        <Route component={ Nav } />
-      </HashRouter>
+        <HashRouter>
+          <Route component={ Nav } />
+          <Route component={ Notes } />          
+        </HashRouter>
     );
   }
 }
